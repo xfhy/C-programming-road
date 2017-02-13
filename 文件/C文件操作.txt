@@ -1,0 +1,250 @@
+一、读字符函数fgetc
+
+　　fgetc函数的功能是从指定的文件中读一个字符，函数调用的形式为：字符变量=fgetc(文件指针)； 例如：ch=fgetc(fp);其意义是从打开的文件fp中读取一个字符并送入ch中。
+
+　　对于fgetc函数的使用有以下几点说明：
+1. 在fgetc函数调用中，读取的文件必须是以读或读写方式打开的。
+
+2. 读取字符的结果也可以不向字符变量赋值，例如：fgetc(fp);但是读出的字符不能保存。
+
+3. 在文件内部有一个位置指针。用来指向文件的当前读写字节。在文件打开时，该指针总是指向文件的第一个字节。使用fgetc 函数后， 该位置指针将向后移动一个字节。 因此可连续多次使用fgetc函数，读取多个字符。 应注意文件指针和文件内部的位置指针不是一回事。文件指针是指向整个文件的，须在程序中定义说明，只要不重新赋值，文件指针的值是不变的。文件内部的位置指针用以指示文件内部的当前读写位置，每读写一次，该指针均向后移动，它不需在程序中定义说明，而是由系统自动设置的。
+
+[例10.1]读入文件e10-1.c，在屏幕上输出。
+#include<stdio.h>
+main()
+{
+FILE *fp;
+char ch;
+if((fp=fopen("e10_1.c","rt"))==NULL)
+{
+printf("Cannot open file strike any key exit!");
+getch();
+exit(1);
+}
+ch=fgetc(fp);
+while (ch!=EOF)
+{
+putchar(ch);
+ch=fgetc(fp);
+}
+fclose(fp);
+}
+　　本例程序的功能是从文件中逐个读取字符，在屏幕上显示。 程序定义了文件指针fp,以读文本文件方式打开文件“e10_1.c”， 并使fp指向该文件。如打开文件出错， 给出提示并退出程序。程序第12行先读出一个字符，然后进入循环，只要读出的字符不是文件结束标志(每个文件末有一结束标志EOF)就把该字符显示在屏幕上，再读入下一字符。每读一次，文件内部的位置指针向后移动一个字符，文件结束时，该指针指向EOF。执行本程序将显示整个文件。
+
+二、写字符函数fputc
+
+　　fputc函数的功能是把一个字符写入指定的文件中，函数调用的形式为： fputc(字符量，文件指针)； 其中，待写入的字符量可以是字符常量或变量，例如：fputc('a',fp);其意义是把字符a写入fp所指向的文件中。
+
+　　对于fputc函数的使用也要说明几点：
+1. 被写入的文件可以用、写、读写，追加方式打开，用写或读写方式打开一个已存在的文件时将清除原有的文件内容，写入字符从文件首开始。如需保留原有文件内容，希望写入的字符以文件末开始存放，必须以追加方式打开文件。被写入的文件若不存在，则创建该文件。
+
+2. 每写入一个字符，文件内部位置指针向后移动一个字节。
+
+3. fputc函数有一个返回值，如写入成功则返回写入的字符， 否则返回一个EOF。可用此来判断写入是否成功。
+
+[例10.2]从键盘输入一行字符，写入一个文件， 再把该文件内容读出显示在屏幕上。
+#include<stdio.h>
+main()
+{
+FILE *fp;
+char ch;
+if((fp=fopen("string","wt+"))==NULL)
+{
+printf("Cannot open file strike any key exit!");
+getch();
+exit(1);
+}
+printf("input a string:\n");
+ch=getchar();
+while (ch!='\n')
+{
+fputc(ch,fp);
+ch=getchar();
+}
+rewind(fp);
+ch=fgetc(fp);
+while(ch!=EOF)
+{
+putchar(ch);
+ch=fgetc(fp);
+}
+printf("\n");
+fclose(fp);
+}
+　　程序中第6行以读写文本文件方式打开文件string。程序第13行从键盘读入一个字符后进入循环，当读入字符不为回车符时，则把该字符写入文件之中，然后继续从键盘读入下一字符。 每输入一个字符，文件内部位置指针向后移动一个字节。写入完毕， 该指针已指向文件末。如要把文件从头读出，须把指针移向文件头，程序第19行rewind函数用于把fp所指文件的内部位置指针移到文件头。 第20至25行用于读出文件中的一行内容。
+
+[例10.3]把命令行参数中的前一个文件名标识的文件， 复制到后一个文件名标识的文件中， 如命令行中只有一个文件名则把该文件写到标准输出文件(显示器)中。
+#include<stdio.h>
+main(int argc,char *argv[])
+{
+FILE *fp1,*fp2;
+char ch;
+if(argc==1)
+{
+printf("have not enter file name strike any key exit");
+getch();
+exit(0);
+}
+if((fp1=fopen(argv[1],"rt"))==NULL)
+{
+printf("Cannot open %s\n",argv[1]);
+getch();
+exit(1);
+}
+if(argc==2) fp2=stdout;
+else if((fp2=fopen(argv[2],"wt+"))==NULL)
+{
+printf("Cannot open %s\n",argv[1]);
+getch();
+exit(1);
+}
+while((ch=fgetc(fp1))!=EOF)
+fputc(ch,fp2);
+fclose(fp1);
+fclose(fp2);
+}
+　　本程序为带参的main函数。程序中定义了两个文件指针 fp1 和fp2，分别指向命令行参数中给出的文件。如命令行参数中没有给出文件名，则给出提示信息。程序第18行表示如果只给出一个文件名，则使fp2指向标准输出文件(即显示器)。程序第25行至28行用循环语句逐个读出文件1中的字符再送到文件2中。再次运行时，给出了一个文件名(由例10.2所建立的文件)， 故输出给标准输出文件stdout，即在显示器上显示文件内容。第三次运行，给出了二个文件名，因此把string中的内容读出，写入到OK之中。可用DOS命令type显示OK的内容：字符串读写函数ｆｇｅｔｓ和ｆｐｕｔｓ
+
+一、读字符串函数fgets函数的功能是从指定的文件中读一个字符串到字符数组中，函数调用的形式为： fgets(字符数组名，n，文件指针)；其中的n是一个正整数。表示从文件中读出的字符串不超过 n-1个字符。在读入的最后一个字符后加上串结束标志'\0'。例如：fgets(str,n,fp);的意义是从fp所指的文件中读出n-1个字符送入字符数组str中。
+[例10.4]从e10_1.c文件中读入一个含10个字符的字符串。
+#include<stdio.h>
+main()
+{
+FILE *fp;
+char str[11];
+if((fp=fopen("e10_1.c","rt"))==NULL)
+{
+printf("Cannot open file strike any key exit!");
+getch();
+exit(1);
+}
+fgets(str,11,fp);
+printf("%s",str);
+fclose(fp);
+}
+　　本例定义了一个字符数组str共11个字节，在以读文本文件方式打开文件e101.c后，从中读出10个字符送入str数组，在数组最后一个单元内将加上'\0'，然后在屏幕上显示输出str数组。输出的十个字符正是例10.1程序的前十个字符。
+
+　　对fgets函数有两点说明：
+1. 在读出n-1个字符之前，如遇到了换行符或EOF，则读出结束。
+2. fgets函数也有返回值，其返回值是字符数组的首地址。
+
+二、写字符串函数fputs
+
+fputs函数的功能是向指定的文件写入一个字符串，其调用形式为： fputs(字符串，文件指针) 其中字符串可以是字符串常量，也可以是字符数组名，或指针 变量，例如：
+fputs(“abcd“，fp)；
+其意义是把字符串“abcd”写入fp所指的文件之中。[例10.5]在例10.2中建立的文件string中追加一个字符串。
+#include<stdio.h>
+main()
+{
+FILE *fp;
+char ch,st[20];
+if((fp=fopen("string","at+"))==NULL)
+{
+printf("Cannot open file strike any key exit!");
+getch();
+exit(1);
+}
+printf("input a string:\n");
+scanf("%s",st);
+fputs(st,fp);
+rewind(fp);
+ch=fgetc(fp);
+while(ch!=EOF)
+{
+putchar(ch);
+ch=fgetc(fp);
+}
+printf("\n");
+fclose(fp);
+}
+　　本例要求在string文件末加写字符串，因此，在程序第6行以追加读写文本文件的方式打开文件string 。 然后输入字符串， 并用fputs函数把该串写入文件string。在程序15行用rewind函数把文件内部位置指针移到文件首。 再进入循环逐个显示当前文件中的全部内容。
+
+数据块读写函数ｆｒｅａｄ和ｆｗｒｉｔｅ
+
+　　Ｃ语言还提供了用于整块数据的读写函数。 可用来读写一组数据，如一个数组元素，一个结构变量的值等。读数据块函数调用的一般形式为： fread(buffer,size,count,fp); 写数据块函数调用的一般形式为： fwrite(buffer,size,count,fp); 其中buffer是一个指针，在fread函数中，它表示存放输入数据的首地址。在fwrite函数中，它表示存放输出数据的首地址。 size 表示数据块的字节数。count 表示要读写的数据块块数。fp 表示文件指针。
+例如：
+fread(fa,4,5,fp); 其意义是从fp所指的文件中，每次读4个字节(一个实数)送入实数组fa中，连续读5次，即读5个实数到fa中。
+[例10.6]从键盘输入两个学生数据，写入一个文件中， 再读出这两个学生的数据显示在屏幕上。
+#include<stdio.h>
+struct stu
+{
+char name[10];
+int num;
+int age;
+char addr[15];
+}boya[2],boyb[2],*pp,*qq;
+main()
+{
+FILE *fp;
+char ch;
+int i;
+pp=boya;
+qq=boyb;
+if((fp=fopen("stu_list","wb+"))==NULL)
+{
+printf("Cannot open file strike any key exit!");
+getch();
+exit(1);
+}
+printf("\ninput data\n");
+for(i=0;i<2;i++,pp++)
+scanf("%s%d%d%s",pp->name,&pp->num,&pp->age,pp->addr);
+pp=boya;
+fwrite(pp,sizeof(struct stu),2,fp);
+rewind(fp);
+fread(qq,sizeof(struct stu),2,fp);
+printf("\n\nname\tnumber age addr\n");
+for(i=0;i<2;i++,qq++)
+printf("%s\t%5d%7d%s\n",qq->name,qq->num,qq->age,qq->addr);
+fclose(fp);
+}
+　　本例程序定义了一个结构stu,说明了两个结构数组boya和 boyb以及两个结构指针变量pp和qq。pp指向boya,qq指向boyb。程序第16行以读写方式打开二进制文件“stu_list”，输入二个学生数据之后，写入该文件中， 然后把文件内部位置指针移到文件首，读出两块学生数据后，在屏幕上显示。
+
+格式化读写函数ｆｓｃａｎｆ和ｆｐｒｉｎｔｆ
+
+fscanf函数，fprintf函数与前面使用的scanf和printf 函数的功能相似，都是格式化读写函数。 两者的区别在于 fscanf 函数和fprintf函数的读写对象不是键盘和显示器，而是磁盘文件。这两个函数的调用格式为： fscanf(文件指针，格式字符串，输入表列)； fprintf(文件指针，格式字符串，输出表列)； 例如：
+fscanf(fp,"%d%s",&i,s);
+fprintf(fp,"%d%c",j,ch); 
+用fscanf和fprintf函数也可以完成例10.6的问题。修改后的程序如例10.7所示。
+[例10.7]
+#include<stdio.h>
+struct stu
+{
+char name[10];
+int num;
+int age;
+char addr[15];
+}boya[2],boyb[2],*pp,*qq;
+main()
+{
+FILE *fp;
+char ch;
+int i;
+pp=boya;
+qq=boyb;
+if((fp=fopen("stu_list","wb+"))==NULL)
+{
+printf("Cannot open file strike any key exit!");
+getch();
+exit(1);
+}
+printf("\ninput data\n");
+for(i=0;i<2;i++,pp++)
+scanf("%s%d%d%s",pp->name,&pp->num,&pp->age,pp->addr);
+pp=boya;
+for(i=0;i<2;i++,pp++)
+fprintf(fp,"%s %d %d %s\n",pp->name,pp->num,pp->age,pp->
+addr);
+rewind(fp);
+for(i=0;i<2;i++,qq++)
+fscanf(fp,"%s %d %d %s\n",qq->name,&qq->num,&qq->age,qq->addr);
+printf("\n\nname\tnumber age addr\n");
+qq=boyb;
+for(i=0;i<2;i++,qq++)
+printf("%s\t%5d %7d %s\n",qq->name,qq->num, qq->age,
+qq->addr);
+fclose(fp);
+}
+　　与例10.6相比，本程序中fscanf和fprintf函数每次只能读写一个结构数组元素，因此采用了循环语句来读写全部数组元素。还要注意指针变量pp,qq由于循环改变了它们的值，因此在程序的25和32行分别对它们重新赋予了数组的首地址。
+15)把它作为首要任务
+很少有外部力量能说服你去学习。渴望应该来自内部。一旦你决定把终身学习作为一种习惯,你就应该把它作为你生命里的首要任务
